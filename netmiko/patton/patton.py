@@ -28,13 +28,25 @@ class PattonBase(CiscoSSHConnection):
         output = output.replace("(cfg)", "")
         return check_string in output
 
-    def _enter_shell(self):
-        """Enter the Bourne Shell."""
-        return self.send_command("bash", expect_string=r"[\$#]")
+    def config_mode(self, config_command="", pattern=""):
+        """Enter into config_mode.
 
-    def _return_cli(self):
-        """Return to the CLI."""
-        return self.send_command("exit", expect_string=r"[#>]")
+        :param config_command: Configuration command to send to the device
+        :type config_command: str
+
+        :param pattern: Pattern to terminate reading of channel
+        :type pattern: str
+        """
+        output = ""
+        if not self.check_config_mode():
+            self.write_channel(self.normalize_cmd(config_command))
+            # Make sure you read until you detect the command echo (avoid getting out of sync)
+            output += self.read_until_pattern(pattern=re.escape(config_command.strip()))
+            if not re.search(pattern, output, flags=re.M):
+                output += self.read_until_pattern(pattern=pattern)
+            if not self.check_config_mode():
+                raise ValueError("Failed to enter configuration mode.")
+        return output
 
 
 class PattonSSH(PattonBase):
