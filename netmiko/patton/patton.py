@@ -1,4 +1,5 @@
-import time,re
+import time
+import re
 from netmiko.cisco_base_connection import CiscoSSHConnection
 from netmiko.cisco_base_connection import CiscoFileTransfer
 from netmiko import log
@@ -15,7 +16,7 @@ class PattonBase(CiscoSSHConnection):
         time.sleep(0.3 * self.global_delay_factor)
         self.clear_buffer()
 
-    def check_config_mode(self, check_string=")#", pattern=""):
+    def check_config_mode(self, check_string="(cfg)#", pattern=""):
         """
         Checks if the device is in configuration mode or not.
         Patton does this:
@@ -25,7 +26,6 @@ class PattonBase(CiscoSSHConnection):
         self.write_channel(self.RETURN)
         output = self.read_until_pattern(pattern=pattern)
         log.debug(f"check_config_mode: {repr(output)}")
-        output = output.replace("(cfg)", "")
         return check_string in output
 
     def config_mode(self, config_command="", pattern=""):
@@ -41,7 +41,8 @@ class PattonBase(CiscoSSHConnection):
         if not self.check_config_mode():
             self.write_channel(self.normalize_cmd(config_command))
             # Make sure you read until you detect the command echo (avoid getting out of sync)
-            output += self.read_until_pattern(pattern=re.escape(config_command.strip()))
+            output += self.read_until_pattern(
+                pattern=re.escape(config_command.strip()))
             if not re.search(pattern, output, flags=re.M):
                 output += self.read_until_pattern(pattern=pattern)
             if not self.check_config_mode():
