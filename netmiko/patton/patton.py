@@ -28,7 +28,7 @@ class PattonBase(CiscoSSHConnection):
         log.debug(f"check_config_mode: {repr(output)}")
         return check_string in output
 
-    def config_mode(self, config_command="", pattern=""):
+    def config_mode(self, config_command="configure", pattern=""):
         """Enter into config_mode.
 
         :param config_command: Configuration command to send to the device
